@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>售货机</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .product {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>售货机</h1>
+
+<div id="product-list"></div>
+
+<h2>补货</h2>
+<input type="text" id="replenish-name" placeholder="商品名称">
+<input type="number" id="replenish-quantity" placeholder="补货数量">
+<button id="replenish-button">补货</button>
+
+<h2>购买商品</h2>
+<input type="text" id="sell-name" placeholder="商品名称">
+<input type="number" id="sell-quantity" placeholder="购买数量">
+<input type="number" id="sell-money" placeholder="支付金额">
+<button id="sell-button">购买</button>
+<script>
+let Product = function (name, price, stock) {
+    this.name = name;
+    this.price = price;
+    this.stock = stock;
+    this.addStock = function(quantity) {
+        this.stock += quantity;
+    }
+    this.show = function(){
+        return `${this.name}, ${this.price}元, ${this.stock}件`;
+    }
+}
+
+let SellingMachine = function () {
+    this.products = [
+        new Product('水', 2, 10),
+        new Product('可乐', 3, 10),
+        new Product('牛奶', 5, 10),
+    ];
+    
+    this.list = function() {
+        const productListDiv = document.getElementById('product-list');
+        productListDiv.innerHTML = '<h2>当前商品</h2>';
+        this.products.forEach(m => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product';
+            productDiv.textContent = m.show();
+            productListDiv.appendChild(productDiv);
+        });
+    }
+    
+    this.replenishment = function(name, quantity){
+        if (quantity <= 0) {
+            alert('quantity必须大于0');
+            return;
+        }
+        const product = this.products.find(x => x.name === name);
+        if (product === undefined) {
+            alert(`不销售${name}`);
+            return;
+        }
+        product.addStock(quantity);
+        alert(`补货成功，${product.name}剩余${product.stock}件`);
+        this.list(); // 更新商品列表
+    }
+    
+    this.sell = function(name, quantity, money) {
+        const product = this.products.find(x => x.name === name);
+        if (product === undefined) {
+            alert(`不销售${name}`);
+            return;
+        }
+
+        if (product.stock < quantity) {
+            alert(`库存不足，${product.name} 仅剩 ${product.stock} 件`);
+            return;
+        }
+
+        const totalPrice = quantity * product.price;
+        if (money < totalPrice) {
+            alert(`金额不足，${name} ${quantity}件应付￥${totalPrice}`);
+            return;
+        }
+
+        product.addStock(-quantity);
+        const rest = money - totalPrice;
+        alert(`成功购买商品：${name}, ${quantity}件, 共${totalPrice}元，请取走您的商品。${rest > 0 ? `以及零钱${rest}元。` : ''}`);
+        this.list(); // 更新商品列表
+        return rest;
+    }
+}
+
+const machine = new SellingMachine();
+machine.list();
+    
+    document.getElementById('replenish-button').addEventListener('click', function() {
+        const name = document.getElementById('replenish-name').value;
+        const quantity = parseInt(document.getElementById('replenish-quantity').value);
+        machine.replenishment(name, quantity);
+    });
+    
+    document.getElementById('sell-button').addEventListener('click', function() {
+        const name = document.getElementById('sell-name').value;
+        const quantity = parseInt(document.getElementById('sell-quantity').value);
+        const money = parseFloat(document.getElementById('sell-money').value);
+        machine.sell(name, quantity, money);
+    });
+</script>
+</body>
+</html>
